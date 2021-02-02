@@ -1,85 +1,7 @@
----
-version: '2'
+version: '2.2'
 services:
-  mongo:
-    image: mongo:4.2.5
-    hostname: mongo
-    container_name: mongo
-    ports:
-      - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: mongo-user
-      MONGO_INITDB_ROOT_PASSWORD: mongo-pw
-      MONGO_REPLICA_SET_NAME: my-replica-set
-    command: --replSet my-replica-set --bind_ip_all
-  postgres:
-    image: debezium/postgres:12
-    hostname: postgres
-    container_name: postgres
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: postgres-user
-      POSTGRES_PASSWORD: postgres-pw
-      POSTGRES_DB: customers
-    volumes:
-      - ./postgres/custom-config.conf:/etc/postgresql/postgresql.conf
-    command: postgres -c config_file=/etc/postgresql/postgresql.conf
-
-  zookeeper:
-    image: confluentinc/cp-zookeeper:6.0.0
-    hostname: zookeeper
-    container_name: zookeeper
-    ports:
-      - "2181:2181"
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-
-  broker:
-    image: confluentinc/cp-server:6.0.0
-    hostname: broker
-    container_name: broker
-    depends_on:
-      - zookeeper
-    ports:
-      - "9092:9092"
-      - "9101:9101"
-    volumes:
-      - ./aws/credentials:/etc/credentials
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_JMX_PORT: 9101
-      KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema-registry:8081
-      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker:29092
-      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
-      CONFLUENT_METRICS_ENABLE: 'true'
-      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
-      KAFKA_CONFLUENT_TIER_FEATURE: 'true'
-      KAFKA_CONFLUENT_TIER_ENABLE: 'true'
-      KAFKA_CONFLUENT_TIER_BACKEND: S3
-      KAFKA_CONFLUENT_TIER_S3_BUCKET: ${BUCKET_NAME}
-      KAFKA_CONFLUENT_TIER_S3_REGION: ${REGION}
-      KAFKA_CONFLUENT_TIER_LOCAL_HOTSET_MS: 60000 # hotset of 1 minute
-      KAFKA_CONFLUENT_TIER_TOPIC_DELETE_CHECK_INTERVAL_MS: 300000 # check every 5 min for topic deletion
-      KAFKA_CONFLUENT_TIER_METADATA_REPLICATION_FACTOR: 1 # only one broker, so replication factor is one
-      KAFKA_LOG_SEGMENT_BYTES: 1048576000 # 100 MB log segments
-      KAFKA_LOG_RETENTION_MS: -1 # eternal
-      #KAFKA_LOG_RETENTION_MS: 600000 # 10 minute retention
-      KAFKA_CONFLUENT_TIER_S3_CRED_FILE_PATH: /etc/credentials
-      
   schema-registry:
-    image: confluentinc/cp-schema-registry:6.0.0
+    image: confluentinc/cp-schema-registry:6.0.1
     hostname: schema-registry
     container_name: schema-registry
     depends_on:
@@ -91,7 +13,7 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker:29092'
 
   connect:
-    image: cnfldemos/cp-server-connect-datagen:0.4.0-6.0.0
+    image: cnfldemos/cp-server-connect-datagen:0.4.0-6.0.1
     hostname: connect
     container_name: connect
     depends_on:
@@ -120,14 +42,14 @@ services:
       CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
       CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
       # CLASSPATH required due to CC-2422
-      CLASSPATH: /usr/share/java/monitoring-interceptors/monitoring-interceptors-6.0.0.jar
+      CLASSPATH: /usr/share/java/monitoring-interceptors/monitoring-interceptors-6.0.1.jar
       CONNECT_PRODUCER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor"
       CONNECT_CONSUMER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor"
       CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components,/usr/share/kafka/plugins/"
       CONNECT_LOG4J_LOGGERS: org.apache.zookeeper=DEBUG,org.I0Itec.zkclient=DEBUG,org.reflections=DEBUG
 
   control-center:
-    image: confluentinc/cp-enterprise-control-center:6.0.0
+    image: confluentinc/cp-enterprise-control-center:6.0.1
     hostname: control-center
     container_name: control-center
     depends_on:
@@ -150,7 +72,7 @@ services:
       PORT: 9021
 
   ksqldb-server:
-    image: confluentinc/cp-ksqldb-server:6.0.0
+    image: confluentinc/cp-ksqldb-server:6.0.1
     hostname: ksqldb-server
     container_name: ksqldb-server
     depends_on:
@@ -176,7 +98,7 @@ services:
       KSQL_KSQL_EXTENSION_DIR: "/etc/ksqldb/ext/"
 
   ksqldb-cli:
-    image: confluentinc/cp-ksqldb-cli:6.0.0
+    image: confluentinc/cp-ksqldb-cli:6.0.1
     container_name: ksqldb-cli
     depends_on:
       - broker
@@ -186,7 +108,7 @@ services:
     tty: true
 
   rest-proxy:
-    image: confluentinc/cp-kafka-rest:6.0.0
+    image: confluentinc/cp-kafka-rest:6.0.1
     depends_on:
       - broker
       - schema-registry
@@ -199,3 +121,73 @@ services:
       KAFKA_REST_BOOTSTRAP_SERVERS: 'broker:29092'
       KAFKA_REST_LISTENERS: "http://0.0.0.0:8082"
       KAFKA_REST_SCHEMA_REGISTRY_URL: 'http://schema-registry:8081'
+  zookeeper:
+    image: confluentinc/cp-zookeeper:6.0.1
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+  broker:
+    image: confluentinc/cp-server:6.0.1
+    hostname: broker
+    container_name: broker
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9101
+      KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker:29092
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: 'true'
+      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+      KAFKA_LOG_SEGMENT_BYTES: 1048576000 # 100 MB log segments
+      #KAFKA_LOG_RETENTION_MS: -1 # eternal
+      KAFKA_LOG_RETENTION_MS: 600000 # 10 minute retention
+
+  es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.7.1
+    container_name: es01
+    environment:
+      - node.name=es01
+      - cluster.name=es-docker-cluster
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - data01:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+  k01:
+    container_name: k01
+    image: docker.elastic.co/kibana/kibana:7.7.1
+    depends_on:
+      - es01
+    environment:
+      SERVER_NAME: kibana
+      ELASTICSEARCH_HOSTS: http://es01:9200
+    ports:
+      - 5601:5601
+volumes:
+  data01:
+    driver: local

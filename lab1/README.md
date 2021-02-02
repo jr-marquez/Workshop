@@ -1,156 +1,195 @@
-  
-# Documentation
+1. Levantar docker compose
 
 
-Seguir :
-https://docs.ksqldb.io/en/latest/tutorials/etl/?_ga=2.60504622.223966942.1601300126-1324303483.1594711257&_gac=1.54318426.1601363011.Cj0KCQjwtsv7BRCmARIsANu-CQdSYWeeFNn8jPsc-EMCpmoN6HTyEDateRIZgbUOpW-EM0vV8FGTrxwaAqphEALw_wcB
+2. Create elasticsearch template:
 
-para posgres:
-INSERT INTO customers (id, name, age) VALUES ('1', 'fred', 34); \
-INSERT INTO customers (id, name, age) VALUES ('2', 'sue', 25); \
-INSERT INTO customers (id, name, age) VALUES ('3', 'bill', 51); \
-INSERT INTO customers (id, name, age) VALUES ('4', 'ramon', 36); \
-INSERT INTO customers (id, name, age) VALUES ('5', 'juan', 28); \
-INSERT INTO customers (id, name, age) VALUES ('6', 'federico', 56); \
-INSERT INTO customers (id, name, age) VALUES ('7', 'luis', 37);\
-INSERT INTO customers (id, name, age) VALUES ('8', 'pedro', 27);\
-INSERT INTO customers (id, name, age) VALUES ('9', 'pablo', 59);\
-INSERT INTO customers (id, name, age) VALUES ('10', 'peter', 59);\
+Elastic version 7 :
 
-Antes de ejecutar el yml:
+curl -XPUT "http://localhost:9200/_template/iotsantander/" -H 'Content-Type: application/json' -d'
+{
+  "index_patterns": "*",
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  },
+  "mappings": {
+      "dynamic_templates": [
+        {
+          "dates": {
+            "match": "*TIMESTAMP",
+            "mapping": {
+              "type": "date",
+              "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+            }
+          }
+        },
+        {
+          "geopoint": {
+            "match": "*LOCATION",
+            "mapping": {
+              "type": "geo_point"
+            }
+          }
+        },
+        {
+          "geopoint2": {
+            "match": "*location",
+            "mapping": {
+              "type": "geo_point"
+            }
+          }
+        },
+        {
+          "non_analysed_string_template": {
+            "match": "identifier,temperatura_promedio,ozono_promedio",
+            "match_mapping_type": "string",
+            "mapping": {
+              "type": "keyword"
+            }
+          }
+        }
+      ]
+  }
+}'
 
-export AWS_ACCESS_KEY_ID=******  \
-export AWS_SECRET_ACCESS_KEY=***** \
-export BUCKET_NAME=rmarquez \
-export REGION=eu-west-2 \
 
-1. ejectuar loadOrders.py
+Cambia también el postman, ver archivos postman.
+V 7+
 
-## Demo Storage
-
-
-1. docker-compose exec broker kafka-topics \
-    --bootstrap-server localhost:9092 \
-    --create \
-    --topic test-topic \
-    --partitions 1
-
-2. docker-compose exec broker kafka-producer-perf-test --topic test-topic \
-    --num-records 5000000 \
-    --record-size 5000 \
-    --throughput -1 \
-    --producer-props \
-        acks=all \
-        bootstrap.servers=localhost:9092 \
-        batch.size=8196
-
-## Schema Validation:
-
-Recordar crear el topic schemaValidation con schema validation enable al final
-
-kafka-console-producer --broker-list localhost:9092 --topic testschema --property parse.key=true --property key.separator=,
-
-## Parte Streaming:
+{
+    "connector.class": "io.confluent.connect.elasticsearch.ElasticsearchSinkConnector",
+    "connection.url": "http://localhost:9200",
+    "tasks.max": "1",
+    "topics": "TRANSPORTE_FILTRADO_JSON",
+    "type.name": "_doc",
+    "name": "elastic_sink_test",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "key.converter.schemas.enable": "false",
+    "schema.ignore" : "true",
+    "key.ignore": "true",
+    "topic.index.map": "TRANSPORTE_FILTRADO_JSON:transporte"
+}
 
 
-1. docker exec -it ksqldb-cli ksql http://ksqldb-server:8088
+Crear topic:
 
-2. SET 'auto.offset.reset' = 'earliest';
+2. Create topic TRANSPORTE;
 
-3. CREATE SOURCE CONNECTOR customers_reader WITH ( \
-    'connector.class' = 'io.debezium.connector.postgresql.PostgresConnector', \
-    'database.hostname' = 'postgres', \
-    'database.port' = '5432', \
-    'database.user' = 'postgres-user', \
-    'database.password' = 'postgres-pw', \
-    'database.dbname' = 'customers', \
-    'database.server.name' = 'customers', \
-    'table.whitelist' = 'public.customers', \
-    'transforms' = 'unwrap', \
-    'transforms.unwrap.type' = 'io.debezium.transforms.ExtractNewRecordState', \
-    'transforms.unwrap.drop.tombstones' = 'false', \
-    'transforms.unwrap.delete.handling.mode' = 'rewrite' \
-); 
 
-4. CREATE SOURCE CONNECTOR logistics_reader WITH ( \
-    'connector.class' = 'io.debezium.connector.mongodb.MongoDbConnector', \
-    'mongodb.hosts' = 'mongo:27017', \
-    'mongodb.name' = 'my-replica-set', \
-    'mongodb.authsource' = 'admin', \
-    'mongodb.user' = 'dbz-user', \
-    'mongodb.password' = 'dbz-pw', \
-    'collection.whitelist' = 'logistics.*', \
-    'transforms' = 'unwrap', \
-    'transforms.unwrap.type' = 'io.debezium.connector.mongodb.transforms.ExtractNewDocumentState', \
-    'transforms.unwrap.drop.tombstones' = 'false', \
-    'transforms.unwrap.delete.handling.mode' = 'drop', \
-    'transforms.unwrap.operation.header' = 'true' \
-); 
+Producer:
+kafka-producer-perf-test \
+    --topic TRANSPORTE \
+    --throughput 5 \
+    --producer.config /Users/ramon/Desktop/config \
+    --payload-file ../data/santanderDatos.json \
+    --producer-props acks=all linger.ms=10 \
+    --num-records 100000 
 
-5. CREATE STREAM customers WITH ( \
-    kafka_topic = 'customers.public.customers', \
-    value_format = 'avro' \
-); \
+Datos.json en el folder
 
-6. CREATE STREAM orders WITH ( \
-    kafka_topic = 'my-replica-set.logistics.orders', \
-    value_format = 'avro', \
-    timestamp = 'ts', \
-    timestamp_format = 'yyyy-MM-dd''T''HH:mm:ss' \
-); 
+El producer config es para el api key y secret.
 
-7. CREATE STREAM shipments WITH ( \
-    kafka_topic = 'my-replica-set.logistics.shipments', \
-    value_format = 'avro', \
-    timestamp = 'ts', \
-    timestamp_format = 'yyyy-MM-dd''T''HH:mm:ss' \
-); 
+On premise
+kafka-producer-perf-test \
+    --topic TRANSPORTE \
+    --throughput 5 \
+    --payload-file santanderDatos.json \
+    --producer-props acks=all linger.ms=10 bootstrap.servers=localhost:9092 \
+    --num-records 100000 
 
-8. CREATE TABLE customers_by_key AS \
-    SELECT id, \
-           latest_by_offset(name) AS name, \
-           latest_by_offset(age) AS age \
-    FROM customers \
-    GROUP BY id \
-    EMIT CHANGES; 
 
-### Ver como cambia en ktable
-1. docker exec -it postgres /bin/bash
-2. psql -U postgres-user customers
-3. update customers set age=99 where name='ramon';
+KSQL:
+CREATE STREAM TRANSPORTE_PUBLICO
+(
+    PARTICLES STRING,
+    NO2 STRING,
+    TYPE STRING,
+    LATITUDE STRING,
+    temperature STRING,
+    altitude STRING,
+    speed STRING,
+    modified STRING,
+    identifier STRING,
+    longitude STRING,
+    odometer STRING,
+    course STRING,
+    ozone STRING
+)
+WITH (
+    KAFKA_TOPIC = 'TRANSPORTE',
+    VALUE_FORMAT = 'JSON'
+);
 
-### Dentro de ksqldb
-1. select * from customers_by_key emit changes;
-2. select * from customers_by_key where id='4';
+CREATE STREAM TRANSPORTE_PUBLICO_KEY 
+WITH (
+    KAFKA_TOPIC = 'TRANSPORTE_PUBLICO_KEYED',
+    VALUE_FORMAT = 'JSON'
+) AS
+SELECT
+    NO2 ,
+    TYPE ,
+    LATITUDE ,
+    temperature ,
+    modified ,
+    identifier ,
+    longitude ,
+    ozone 
+FROM TRANSPORTE_PUBLICO
+PARTITION BY identifier;
 
-3. CREATE STREAM enriched_orders AS \
-    SELECT o.order_id, \
-           o.price, \
-           o.currency, \
-           c.id AS customer_id, \
-           c.name AS customer_name, \
-           c.age AS customer_age \
-    FROM orders AS o \
-    LEFT JOIN customers_by_key c \
-    ON o.customer_id = c.id \
-    EMIT CHANGES; 
+Cambiar a Avro:
 
-4. CREATE STREAM shipped_orders WITH ( \
-    kafka_topic = 'shipped_orders' \
-)   AS \
-    SELECT o.order_id, \
-           s.shipment_id, \
-           o.customer_id, \
-           o.customer_name, \
-           o.customer_age, \
-           s.origin, \
-           o.price, \
-           o.currency \
-    FROM enriched_orders AS o \
-    INNER JOIN shipments s \
-    WITHIN 7 DAYS \
-    ON s.order_id = o.order_id \
-    EMIT CHANGES; 
+
+CREATE TABLE TRANSPORTE_FILTRADO_JSON
+WITH (
+    KAFKA_TOPIC = 'TRANSPORTE_FILTRADO_JSON',
+    VALUE_FORMAT = 'JSON',
+    TIMESTAMP_FORMAT='yyyy-MM-dd HH:mm:ss',
+    TIMESTAMP='timestamp'
+) AS
+SELECT
+    identifier,
+    avg(cast(TEMPERATURE as DOUBLE)) as temperatura_promedio,
+    avg(cast(OZONE as double)) as ozono_promedio,
+    latest_by_offset(LATITUDE  +','+ longitude) as LOCATION,
+    latest_by_offset(TIMESTAMPTOSTRING(ROWTIME, 'yyyy-MM-dd HH:mm:ss')) AS timestamp
+FROM TRANSPORTE_PUBLICO_KEY
+group by identifier
+having avg(cast(OZONE as double)) < 500
+emit changes;
+
+
+create source connector sinkElastic with (
+    "connector.class"= 'io.confluent.connect.elasticsearch.ElasticsearchSinkConnector',
+    "connection.url" = 'http://es01:9200',
+    "tasks.max" = '1',
+    "topics" = 'TRANSPORTE_FILTRADO_JSON',
+    "type.name" = '_doc',
+    "value.converter" = 'org.apache.kafka.connect.json.JsonConverter',
+    "value.converter.schemas.enable" = 'false',
+    "key.converter"='org.apache.kafka.connect.storage.StringConverter',
+    "key.converter.schemas.enable"='false',
+    "schema.ignore" ='true',
+    "key.ignore"='true',
+    "topic.index.map"='TRANSPORTE_FILTRADO_JSON:transporte'
+);
+
+
+Orden:
+
+Producir mensajes a confluent cloud.
+Crear KSQLDB flow
+Cargar Connector a ElasticSearch en Connect (local)
+Importar Dashboard de Kibana y ver resultados.
+
+
+En demos:
+Borrar connector en Connect
+Mostrar flujo ksql
+Cargar connector para que cargue a elastic
+Mostrar kibana (30 segundos atras en el tiempo y que refresque cada 15 secs)
 
 
 
