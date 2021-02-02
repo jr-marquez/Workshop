@@ -57,20 +57,20 @@ kafka-console-producer --broker-list localhost:9092 --topic testschema --propert
 
 2. SET 'auto.offset.reset' = 'earliest';
 
-3. CREATE SOURCE CONNECTOR customers_reader WITH (
-    'connector.class' = 'io.debezium.connector.postgresql.PostgresConnector',
-    'database.hostname' = 'postgres',
-    'database.port' = '5432',
-    'database.user' = 'postgres-user',
-    'database.password' = 'postgres-pw',
-    'database.dbname' = 'customers',
-    'database.server.name' = 'customers',
-    'table.whitelist' = 'public.customers',
-    'transforms' = 'unwrap',
-    'transforms.unwrap.type' = 'io.debezium.transforms.ExtractNewRecordState',
-    'transforms.unwrap.drop.tombstones' = 'false',
-    'transforms.unwrap.delete.handling.mode' = 'rewrite'
-);
+3. CREATE SOURCE CONNECTOR customers_reader WITH ( \
+    'connector.class' = 'io.debezium.connector.postgresql.PostgresConnector', \
+    'database.hostname' = 'postgres', \
+    'database.port' = '5432', \
+    'database.user' = 'postgres-user', \
+    'database.password' = 'postgres-pw', \
+    'database.dbname' = 'customers', \
+    'database.server.name' = 'customers', \
+    'table.whitelist' = 'public.customers', \
+    'transforms' = 'unwrap', \
+    'transforms.unwrap.type' = 'io.debezium.transforms.ExtractNewRecordState', \
+    'transforms.unwrap.drop.tombstones' = 'false', \
+    'transforms.unwrap.delete.handling.mode' = 'rewrite' \
+); 
 
 4. CREATE SOURCE CONNECTOR logistics_reader WITH ( \
     'connector.class' = 'io.debezium.connector.mongodb.MongoDbConnector', \
@@ -85,7 +85,7 @@ kafka-console-producer --broker-list localhost:9092 --topic testschema --propert
     'transforms.unwrap.drop.tombstones' = 'false', \
     'transforms.unwrap.delete.handling.mode' = 'drop', \
     'transforms.unwrap.operation.header' = 'true' \
-); \
+); 
 
 5. CREATE STREAM customers WITH ( \
     kafka_topic = 'customers.public.customers', \
@@ -97,14 +97,14 @@ kafka-console-producer --broker-list localhost:9092 --topic testschema --propert
     value_format = 'avro', \
     timestamp = 'ts', \
     timestamp_format = 'yyyy-MM-dd''T''HH:mm:ss' \
-); \
+); 
 
 7. CREATE STREAM shipments WITH ( \
     kafka_topic = 'my-replica-set.logistics.shipments', \
     value_format = 'avro', \
     timestamp = 'ts', \
     timestamp_format = 'yyyy-MM-dd''T''HH:mm:ss' \
-); \
+); 
 
 8. CREATE TABLE customers_by_key AS \
     SELECT id, \
@@ -112,7 +112,7 @@ kafka-console-producer --broker-list localhost:9092 --topic testschema --propert
            latest_by_offset(age) AS age \
     FROM customers \
     GROUP BY id \
-    EMIT CHANGES; \
+    EMIT CHANGES; 
 
 ### Ver como cambia en ktable
 1. docker exec -it postgres /bin/bash
@@ -123,7 +123,7 @@ kafka-console-producer --broker-list localhost:9092 --topic testschema --propert
 1. select * from customers_by_key emit changes;
 2. select * from customers_by_key where id='4';
 
-CREATE STREAM enriched_orders AS \
+3. CREATE STREAM enriched_orders AS \
     SELECT o.order_id, \
            o.price, \
            o.currency, \
@@ -133,9 +133,9 @@ CREATE STREAM enriched_orders AS \
     FROM orders AS o \
     LEFT JOIN customers_by_key c \
     ON o.customer_id = c.id \
-    EMIT CHANGES; \
+    EMIT CHANGES; 
 
-CREATE STREAM shipped_orders WITH ( \
+4. CREATE STREAM shipped_orders WITH ( \
     kafka_topic = 'shipped_orders' \
 )   AS \
     SELECT o.order_id, \
@@ -150,7 +150,7 @@ CREATE STREAM shipped_orders WITH ( \
     INNER JOIN shipments s \
     WITHIN 7 DAYS \
     ON s.order_id = o.order_id \
-    EMIT CHANGES; \
+    EMIT CHANGES; 
 
 
 
