@@ -58,9 +58,9 @@ curl -XPUT "http://localhost:9200/_template/iotsantander/" -H 'Content-Type: app
 2. Create topic TRANSPORTE;
 
 
-3. kafka-producer-perf-test \
-    --topic TRANSPORTE \
-    --throughput 5 \
+3. kafka-producer-perf-test \\
+    --topic TRANSPORTE \\
+    --throughput 5 \\
     --payload-file santanderDatos.json \
     --producer-props acks=all linger.ms=10 bootstrap.servers=localhost:9092 \
     --num-records 100000 
