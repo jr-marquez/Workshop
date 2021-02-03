@@ -9,7 +9,6 @@ You need to have docker and docker-compose installed.
 # Getting started
 
 ```bash
-git clone https://github.com/jeanlouisboudart/kafka-platform-prometheus.git
 cd kafka-platform-prometheus
 ```
 
