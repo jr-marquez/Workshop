@@ -6,10 +6,10 @@
 
 Antes de ejecutar el yml:
 ```bash
-export AWS_ACCESS_KEY_ID=******  \
-export AWS_SECRET_ACCESS_KEY=***** \
-export BUCKET_NAME=rmarquez \
-export REGION=eu-west-2 \
+export AWS_ACCESS_KEY_ID=******  
+export AWS_SECRET_ACCESS_KEY=***** 
+export BUCKET_NAME=rmarquez 
+export REGION=eu-west-2 
 ```
 
 
@@ -31,9 +31,13 @@ INSERT INTO customers (id, name, age) VALUES ('10', 'peter', 59);
 
 ```bash
 docker exec -it mongo /bin/bash
+
 mongo -u $MONGO_INITDB_ROOT_USERNAME -p mongo-pw admin
+
 rs.initiate()
+
 use config
+
 db.createRole({
     role: "dbz-role",
     privileges: [
