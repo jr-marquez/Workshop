@@ -14,8 +14,12 @@ export REGION=eu-west-2
 
 
 ```bash
+docker-compose up -d
+
 docker exec -it postgres /bin/bash
+
 psql -U postgres-user customers
+
 CREATE TABLE customers (id TEXT PRIMARY KEY, name TEXT, age INT);
 INSERT INTO customers (id, name, age) VALUES ('1', 'fred', 34); 
 INSERT INTO customers (id, name, age) VALUES ('2', 'sue', 25); 
