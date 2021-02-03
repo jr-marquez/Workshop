@@ -54,7 +54,7 @@ curl -XPUT "http://localhost:9200/_template/iotsantander/" -H 'Content-Type: app
 ```
 
 ## Crear topic dentro de C3:
-1. localhost:9021
+1. http://localhost:9021/
 
 2. Create topic TRANSPORTE;
 
@@ -149,7 +149,8 @@ create source connector sinkElastic with (
 
 ## Abrimos Kibana 
 1. http://localhost:5601/
-2. Management --> Kibana --> Saved Objects --> import
+2. importamos dashboard Management --> Kibana --> Saved Objects --> import
+3. Generamos indice con el timestamp
 
 # Orden:
 1. Producir mensajes a confluent cloud.
