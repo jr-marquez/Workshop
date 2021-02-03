@@ -129,25 +129,22 @@ db.orders.insert({"customer_id": "7", "order_id": "22", "price": 29.71, "currenc
 ## Demo Storage (tienen que tener el API key y Secret Correctamente configurados)
 
 
-1. 
+1. Creamos topic
 ```bash
-docker-compose exec broker kafka-topics 
-    --bootstrap-server localhost:9092 
-    --create 
-    --topic test-topic 
+docker-compose exec broker kafka-topics \
+    --bootstrap-server localhost:9092  \
+    --create \
+    --topic test-topic \
     --partitions 1
 ```
 
-2. 
+2.  Generamos trafico (detenemos luego de 1 minuto)
 ```bash
-docker-compose exec broker kafka-producer-perf-test --topic test-topic 
-    --num-records 5000000 
-    --record-size 5000 
-    --throughput -1 
-    --producer-props 
-        acks=all 
-        bootstrap.servers=localhost:9092 
-        batch.size=8196
+docker-compose exec broker kafka-producer-perf-test --topic test-topic \
+    --num-records 5000000 \
+    --record-size 5000 \
+    --throughput -1 \
+    --producer-props acks=all bootstrap.servers=localhost:9092 batch.size=8196
 ```
 
 ## Schema Validation:
