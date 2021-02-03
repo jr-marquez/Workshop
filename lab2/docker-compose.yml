@@ -45,8 +45,6 @@ services:
     ports:
       - "9092:9092"
       - "9101:9101"
-    volumes:
-      - ./aws/credentials:/etc/credentials
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
@@ -76,7 +74,9 @@ services:
       KAFKA_LOG_SEGMENT_BYTES: 1048576000 # 100 MB log segments
       KAFKA_LOG_RETENTION_MS: -1 # eternal
       #KAFKA_LOG_RETENTION_MS: 600000 # 10 minute retention
-      KAFKA_CONFLUENT_TIER_S3_CRED_FILE_PATH: /etc/credentials
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      #KAFKA_CONFLUENT_TIER_S3_CRED_FILE_PATH: /etc/credentials
       
   schema-registry:
     image: confluentinc/cp-schema-registry:6.0.1

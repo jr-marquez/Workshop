@@ -4,12 +4,46 @@
 
 ## Configuración inicial
 
-Antes de ejecutar el yml:
+Antes de ejecutar el yml poner los datos del bucket de S3:
 ```bash
 export BUCKET_NAME=rmarquez 
-export REGION=eu-west-2 
+export REGION=eu-west-2
+export AWS_ACCESS_KEY_ID=*******  
+export AWS_SECRET_ACCESS_KEY=*********
 ```
-ver aws/credentials y poner las tuyas
+Si no se quiere hacer esta parte de la demo comentar las siguientes lineas de docker-compose.yml dentro del servicio broker:
+```bash
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9101
+      KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker:29092
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+      CONFLUENT_METRICS_ENABLE: 'true'
+      CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
+      #KAFKA_CONFLUENT_TIER_FEATURE: 'true'
+      #KAFKA_CONFLUENT_TIER_ENABLE: 'true'
+      #KAFKA_CONFLUENT_TIER_BACKEND: S3
+      #KAFKA_CONFLUENT_TIER_S3_BUCKET: ${BUCKET_NAME}
+      #KAFKA_CONFLUENT_TIER_S3_REGION: ${REGION}
+      KAFKA_CONFLUENT_TIER_LOCAL_HOTSET_MS: 60000 # hotset of 1 minute
+      KAFKA_CONFLUENT_TIER_TOPIC_DELETE_CHECK_INTERVAL_MS: 300000 # check every 5 min for topic deletion
+      KAFKA_CONFLUENT_TIER_METADATA_REPLICATION_FACTOR: 1 # only one broker, so replication factor is one
+      KAFKA_LOG_SEGMENT_BYTES: 1048576000 # 100 MB log segments
+      KAFKA_LOG_RETENTION_MS: -1 # eternal
+      #KAFKA_LOG_RETENTION_MS: 600000 # 10 minute retention
+      #AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      #AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+```
 
 
 ```bash

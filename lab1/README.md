@@ -131,7 +131,7 @@ emit changes;
 
 ## Creamos sink a Elastic
 ```bash
-create source connector sinkElastic with ( 
+create sink connector sinkElastic with ( 
     "connector.class"= 'io.confluent.connect.elasticsearch.ElasticsearchSinkConnector', 
     "connection.url" = 'http://es01:9200', 
     "tasks.max" = '1', 
