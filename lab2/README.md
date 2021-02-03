@@ -6,11 +6,10 @@
 
 Antes de ejecutar el yml:
 ```bash
-export AWS_ACCESS_KEY_ID=******  
-export AWS_SECRET_ACCESS_KEY=***** 
 export BUCKET_NAME=rmarquez 
 export REGION=eu-west-2 
 ```
+ver aws/credentials y poner las tuyas
 
 
 ```bash
