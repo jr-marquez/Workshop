@@ -54,16 +54,12 @@ curl -XPUT "http://localhost:9200/_template/iotsantander/" -H 'Content-Type: app
 
 
 ## Crear topic:
+1. url es : localhost:9021
 
 2. Create topic TRANSPORTE;
 
 
-3. kafka-producer-perf-test \\
-    --topic TRANSPORTE \\
-    --throughput 5 \\
-    --payload-file santanderDatos.json \
-    --producer-props acks=all linger.ms=10 bootstrap.servers=localhost:9092 \
-    --num-records 100000 
+3. docker-compose exec broker bash -c 'kafka-producer-perf-test --topic TRANSPORTE --throughput 5 --payload-file /tmp/datos/santanderDatos.json --producer-props acks=all linger.ms=10 bootstrap.servers=localhost:9092 --num-records 100000'
 
 
 ## comandos ksqldb
@@ -124,22 +120,24 @@ having avg(cast(OZONE as double)) < 500 \
 emit changes; 
 
 ## Creamos sink a Elastic
-create source connector sinkElastic with (
-    "connector.class"= 'io.confluent.connect.elasticsearch.ElasticsearchSinkConnector',
-    "connection.url" = 'http://es01:9200',
-    "tasks.max" = '1',
-    "topics" = 'TRANSPORTE_FILTRADO_JSON',
-    "type.name" = '_doc',
-    "value.converter" = 'org.apache.kafka.connect.json.JsonConverter',
-    "value.converter.schemas.enable" = 'false',
-    "key.converter"='org.apache.kafka.connect.storage.StringConverter',
-    "key.converter.schemas.enable"='false',
-    "schema.ignore" ='true',
-    "key.ignore"='true',
-    "topic.index.map"='TRANSPORTE_FILTRADO_JSON:transporte'
-);
+create source connector sinkElastic with ( \
+    "connector.class"= 'io.confluent.connect.elasticsearch.ElasticsearchSinkConnector', \
+    "connection.url" = 'http://es01:9200', \
+    "tasks.max" = '1', \
+    "topics" = 'TRANSPORTE_FILTRADO_JSON', \
+    "type.name" = '_doc', \
+    "value.converter" = 'org.apache.kafka.connect.json.JsonConverter', \
+    "value.converter.schemas.enable" = 'false', \
+    "key.converter"='org.apache.kafka.connect.storage.StringConverter', \
+    "key.converter.schemas.enable"='false', \
+    "schema.ignore" ='true', \
+    "key.ignore"='true', \
+    "topic.index.map"='TRANSPORTE_FILTRADO_JSON:transporte' \
+); 
 
-
+## Abrimos Kibana 
+1. http://localhost:5601/
+2. Management --> Kibana --> Saved Objects --> import
 # Orden:
 
 1. Producir mensajes a confluent cloud.
